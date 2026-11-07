@@ -1,1 +1,68 @@
-https://script.google.com/macros/s/AKfycbxWr-ON7UcNYVf6ii6rHICpeHmO0bUSQBs0zwOTyubov3HChSHsm_Urb1onov5n0ye2NA/exec
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>আল-আবরার নূরানী ফাউন্ডেশন - হাজিরা</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #f4f7f6; margin: 0; padding: 15px; }
+    h2 { color: #2c3e50; margin-bottom: 15px; }
+    .btn-group { margin-bottom: 15px; }
+    button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin: 5px; font-weight: bold; }
+    .in-btn { background: #27ae60; color: white; }
+    .out-btn { background: #e67e22; color: white; }
+    .active { outline: 3px solid #2c3e50; }
+    #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 10px; overflow: hidden; }
+    #result { margin-top: 15px; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; display: none; }
+    .success { background: #d4edda; color: #155724; display: block !important; }
+    .error { background: #f8d7da; color: #721c24; display: block !important; }
+  </style>
+</head>
+<body>
+  <h2>আল-আবরার নূরানী ফাউন্ডেশন</h2>
+  <div class="btn-group">
+    <button id="btnIn" class="in-btn active" onclick="setMode('In')">আগমন (In)</button>
+    <button id="btnOut" class="out-btn" onclick="setMode('Out')">ছুটি (Out)</button>
+  </div>
+  <div id="reader"></div>
+  <div id="result"></div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWr-ON7UcNYVf6ii6rHICpeHmO0bUSQbs0zwOTyubov3HChSHsm_Urb1onov5n0ye2NA/exec";
+    let currentMode = "In";
+    let isScanning = true;
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btnIn').classList.toggle('active', mode === 'In');
+      document.getElementById('btnOut').classList.toggle('active', mode === 'Out');
+    }
+
+    function onScanSuccess(decodedText) {
+      if (!isScanning) return;
+      isScanning = false;
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = '';
+      resultDiv.style.display = 'block';
+      resultDiv.innerText = "অপেক্ষা করুন, তথ্য পাঠানো হচ্ছে...";
+
+      fetch(`${SCRIPT_URL}?id=${encodeURIComponent(decodedText)}&type=${currentMode}`)
+        .then(res => res.text())
+        .then(data => {
+          resultDiv.className = 'success';
+          resultDiv.innerText = data || `আইডি: ${decodedText} (${currentMode}) সফলভাবে জমা হয়েছে!`;
+          setTimeout(() => { isScanning = true; }, 2000);
+        })
+        .catch(() => {
+          resultDiv.className = 'error';
+          resultDiv.innerText = "তথ্য পাঠাতে সমস্যা হয়েছে! ইন্টারনেট চেক করুন।";
+          setTimeout(() => { isScanning = true; }, 2000);
+        });
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess);
+  </script>
+</body>
+</html>
