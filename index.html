@@ -37,14 +37,22 @@
     .card-error { border-top: 10px solid #e74c3c; }
     .card-error .popup-title { color: #e74c3c; }
     #loading { margin-top: 15px; font-size: 16px; font-weight: bold; color: #2980b9; display: none; }
+    .header-box { display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; }
+.logo-img { width: 75px; height: 75px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-bottom: 8px; border: 2px solid #2c3e50; }
+#liveClock { font-size: 14px; font-weight: bold; color: #34495e; background: #ecf0f1; padding: 5px 14px; border-radius: 20px; margin-top: 5px; display: inline-block; }
+.cam-btn { background: #34495e; color: white; margin-top: 15px; padding: 10px 20px; font-size: 14px; border-radius: 25px; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
   </style>
 </head>
 <body>
-  <h2>আল-আবরার নূরানী ফাউন্ডেশন</h2>
+  <<div class="header-box">
+  <img src="logo.jpg" alt="Logo" class="logo-img">
+  <h2 style="margin: 0;">আল-আবরার নূরানী ফাউন্ডেশন</h2>
+  <div id="liveClock">লোড হচ্ছে...</div>
+</div>
+    <button class="cam-btn" onclick="switchCamera()">🔄 ক্যামেরা পরিবর্তন করুন</button>
   <div class="btn-group">
     <button id="btnIn" class="in-btn active" onclick="setMode('In')">আগমন (In)</button>
     <button id="btnOut" class="out-btn" onclick="setMode('Out')">ছুটি (Out)</button>
-    <button onclick="switchCamera()" style="background: #3498db; color: white;">🔄 ক্যামেরা বদলান</button>
   </div>
   <div id="reader"></div>
   <div id="loading">অপেক্ষা করুন, যাচাই করা হচ্ছে...</div>
@@ -169,6 +177,13 @@ function switchCamera() {
 }
 
 startScanner();
+    function updateClock() {
+  const now = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+  document.getElementById('liveClock').innerText = now.toLocaleDateString('bn-BD', options);
+}
+setInterval(updateClock, 1000);
+updateClock();
   </script>
 </body>
 </html>
