@@ -7,16 +7,36 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; background: #f4f7f6; margin: 0; padding: 15px; }
-    h2 { color: #2c3e50; margin-bottom: 15px; }
+    h2 { color: #2c3e50; margin-bottom: 15px; font-size: 22px; }
     .btn-group { margin-bottom: 15px; }
     button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin: 5px; font-weight: bold; }
     .in-btn { background: #27ae60; color: white; }
     .out-btn { background: #e67e22; color: white; }
-    .active { outline: 3px solid #2c3e50; }
-    #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 10px; overflow: hidden; }
-    #result { margin-top: 15px; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; display: none; }
-    .success { background: #d4edda; color: #155724; display: block !important; }
-    .error { background: #f8d7da; color: #721c24; display: block !important; }
+    .active { outline: 4px solid #2c3e50; transform: scale(1.05); }
+    #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    
+    /* বড় পপ-আপ কার্ডের স্টাইল */
+    #popup {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.75); display: none;
+      justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box;
+    }
+    .popup-card {
+      background: white; padding: 30px 20px; border-radius: 16px; width: 100%; max-width: 350px;
+      text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: popIn 0.25s ease-out;
+    }
+    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .icon { font-size: 65px; margin-bottom: 10px; }
+    .popup-title { font-size: 22px; font-weight: bold; margin-bottom: 8px; }
+    .popup-name { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; }
+    .popup-msg { font-size: 16px; color: #555; }
+    .card-success { border-top: 10px solid #27ae60; }
+    .card-success .popup-title { color: #27ae60; }
+    .card-warning { border-top: 10px solid #e67e22; }
+    .card-warning .popup-title { color: #e67e22; }
+    .card-error { border-top: 10px solid #e74c3c; }
+    .card-error .popup-title { color: #e74c3c; }
+    #loading { margin-top: 15px; font-size: 16px; font-weight: bold; color: #2980b9; display: none; }
   </style>
 </head>
 <body>
@@ -26,24 +46,70 @@
     <button id="btnOut" class="out-btn" onclick="setMode('Out')">ছুটি (Out)</button>
   </div>
   <div id="reader"></div>
-  <div id="result"></div>
+  <div id="loading">অপেক্ষা করুন, যাচাই করা হচ্ছে...</div>
+
+  <!-- পপ-আপ কার্ড -->
+  <div id="popup">
+    <div id="popupCard" class="popup-card">
+      <div id="popupIcon" class="icon"></div>
+      <div id="popupTitle" class="popup-title"></div>
+      <div id="popupName" class="popup-name"></div>
+      <div id="popupMsg" class="popup-msg"></div>
+    </div>
+  </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTPxjs9k4fNrvmrXl4_aVHHQUO1HsHd9lPfF5QeFm33V40Vr1JCwQ6tDsMjpArFwoTYg/exec";
     let currentMode = "In";
     let isScanning = true;
 
-    function playBeep() {
+    function playSound(type) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(1000, ctx.currentTime);
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.15);
+
+      if (type === 'success') {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.5, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      } else {
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      }
+    }
+
+    function speakBangla(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'bn-IN';
+        msg.rate = 1.0;
+        window.speechSynthesis.speak(msg);
+      }
+    }
+
+    function showPopup(status, icon, title, name, msg) {
+      const popup = document.getElementById('popup');
+      const card = document.getElementById('popupCard');
+      card.className = 'popup-card card-' + status;
+      document.getElementById('popupIcon').innerText = icon;
+      document.getElementById('popupTitle').innerText = title;
+      document.getElementById('popupName').innerText = name;
+      document.getElementById('popupMsg').innerText = msg;
+      popup.style.display = 'flex';
+
+      setTimeout(() => {
+        popup.style.display = 'none';
+        isScanning = true;
+      }, 1000);
     }
 
     function setMode(mode) {
@@ -55,23 +121,28 @@
     function onScanSuccess(decodedText) {
       if (!isScanning) return;
       isScanning = false;
-      playBeep();
-      
-      const resultDiv = document.getElementById('result');
-      resultDiv.className = '';
-      resultDiv.style.display = 'block';
-      resultDiv.innerText = "অপেক্ষা করুন, তথ্য পাঠানো হচ্ছে...";
+      document.getElementById('loading').style.display = 'block';
 
-      fetch(`${SCRIPT_URL}?id=${encodeURIComponent(decodedText)}&mode=${currentMode}`, { mode: 'no-cors' })
-        .then(() => {
-          resultDiv.className = 'success';
-          resultDiv.innerText = `আইডি: ${decodedText} (${currentMode}) সফলভাবে জমা হয়েছে!`;
-          setTimeout(() => { isScanning = true; }, 2000);
+      fetch(`${SCRIPT_URL}?id=${encodeURIComponent(decodedText)}&mode=${currentMode}`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('loading').style.display = 'none';
+          if (data.success) {
+            playSound('success');
+            if (navigator.vibrate) navigator.vibrate(200);
+            speakBangla("খোস আমদীর, হাজিরা সফল হয়েছে");
+            showPopup('success', '✅', 'খোস আমদীর!', data.name, `${data.mode} - ${data.time}`);
+          } else {
+            playSound('warning');
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            speakBangla("আগেই হাজিরা হয়েছে");
+            showPopup('warning', '⚠️', 'ইতিমধ্যেই স্ক্যান করা হয়েছে!', `আইডি: ${decodedText}`, data.message);
+          }
         })
         .catch(() => {
-          resultDiv.className = 'error';
-          resultDiv.innerText = "তথ্য পাঠাতে সমস্যা হয়েছে! ইন্টারনেট চেক করুন।";
-          setTimeout(() => { isScanning = true; }, 2000);
+          document.getElementById('loading').style.display = 'none';
+          playSound('error');
+          showPopup('error', '❌', 'সমস্যা হয়েছে!', '', 'ইন্টারনেট সংযোগ বা লিঙ্ক চেক করুন।');
         });
     }
 
