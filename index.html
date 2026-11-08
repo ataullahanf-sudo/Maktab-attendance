@@ -47,7 +47,7 @@
       resultDiv.style.display = 'block';
       resultDiv.innerText = "অপেক্ষা করুন, তথ্য পাঠানো হচ্ছে...";
 
-      fetch(`${SCRIPT_URL}?id=${encodeURIComponent(decodedText)}&type=${currentMode}`)
+      fetch(`${SCRIPT_URL}?id=${encodeURIComponent(decodedText)}&type=${currentMode}`{ mode: 'no-cors' })
         .then(res => res.text())
         .then(data => {
           resultDiv.className = 'success';
