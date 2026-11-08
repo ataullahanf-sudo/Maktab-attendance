@@ -44,6 +44,7 @@
   <div class="btn-group">
     <button id="btnIn" class="in-btn active" onclick="setMode('In')">আগমন (In)</button>
     <button id="btnOut" class="out-btn" onclick="setMode('Out')">ছুটি (Out)</button>
+    <button onclick="switchCamera()" style="background: #3498db; color: white;">🔄 ক্যামেরা বদলান</button>
   </div>
   <div id="reader"></div>
   <div id="loading">অপেক্ষা করুন, যাচাই করা হচ্ছে...</div>
@@ -147,7 +148,27 @@
     }
 
     const html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start({ facingMode: "user" }, { fps: 10, qrbox: 250 }, onScanSuccess);
+let currentFacingMode = "user"; // শুরুতে ফ্রন্ট ক্যামেরা চালু হবে
+
+function startScanner() {
+  html5QrCode.start(
+    { facingMode: currentFacingMode },
+    { fps: 10, qrbox: 250 },
+    onScanSuccess
+  ).catch(err => console.log(err));
+}
+
+function switchCamera() {
+  html5QrCode.stop().then(() => {
+    currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
+    startScanner();
+  }).catch(() => {
+    currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
+    startScanner();
+  });
+}
+
+startScanner();
   </script>
 </body>
 </html>
