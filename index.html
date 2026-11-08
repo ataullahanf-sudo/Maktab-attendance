@@ -47,11 +47,10 @@
       resultDiv.style.display = 'block';
       resultDiv.innerText = "অপেক্ষা করুন, তথ্য পাঠানো হচ্ছে...";
 
-      fetch(`${SCRIPT_URL}?id=${encodeURIComponent(decodedText)}&type=${currentMode}`{ mode: 'no-cors' })
-        .then(res => res.text())
-        .then(data => {
+      fetch(`${SCRIPT_URL}?id=${encodeURIComponent(decodedText)}&type=${currentMode}`, { mode: 'no-cors' })
+        .then(() => {
           resultDiv.className = 'success';
-          resultDiv.innerText = data || `আইডি: ${decodedText} (${currentMode}) সফলভাবে জমা হয়েছে!`;
+          resultDiv.innerText = `আইডি: ${decodedText} (${currentMode}) সফলভাবে জমা হয়েছে!`;
           setTimeout(() => { isScanning = true; }, 2000);
         })
         .catch(() => {
